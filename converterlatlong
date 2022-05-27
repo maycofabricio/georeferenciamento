@@ -1,0 +1,19 @@
+from geopy.geocoders import Nominatim
+import pandas as pd
+geolocator = Nominatim(user_agent="maycofabricio@gmail.com")
+listaendereco = pd.read_excel('/content/drive/MyDrive/0 Teste Novos Projetos/Lino.xlsx')
+listafiltrada = listaendereco[['CODIGO','CEP_FORNECEDOR','CIDADE_FORNECEDOR','ESTADO_FORNECEDOR','PAIS_FORNECEDOR','FORNECEDOR','ENDERECO_FORNECEDOR','COMPL_END_FORNECEDOR','BAIRRO_FORNECEDOR']]
+from geopy.extra.rate_limiter import RateLimiter
+geocode = RateLimiter(geolocator.geocode, min_delay_seconds=1)
+listafiltrada['ENDERECO_FORNECEDOR_GEOLOCALIZADO'] = listafiltrada['ENDERECO_FORNECEDOR'].apply(geocode)
+listafiltrada['ENDERECO_LATITUDE'] = listafiltrada['ENDERECO_FORNECEDOR_GEOLOCALIZADO'].apply(lambda loc: loc.latitude if loc else None)
+listafiltrada['ENDERECO_LONGITUDE'] = listafiltrada['ENDERECO_FORNECEDOR_GEOLOCALIZADO'].apply(lambda loc: loc.longitude if loc else None)
+qtdade_linhas = listafiltrada['CODIGO'].count()
+naoencontrados = listafiltrada.ENDERECO_FORNECEDOR_GEOLOCALIZADO.isna().sum()
+listafiltrada_x = listafiltrada[listafiltrada.ENDERECO_FORNECEDOR_GEOLOCALIZADO.isna()]
+##display(listafiltrada_x)
+naoencontrados = listafiltrada.ENDERECO_FORNECEDOR_GEOLOCALIZADO.isna().sum()
+print('Não encontrados:')
+print(naoencontrados)
+print('{:.2%}'.format(naoencontrados / qtdade_linhas))
+listafiltrada.to_excel('listalatlong.xlsx')
